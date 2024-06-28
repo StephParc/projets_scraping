@@ -2,7 +2,7 @@ import scrapy
 from allocinescraper.items import AllocineMoviescraperItem
 
 
-class AlloMovieSpiderSpider(scrapy.Spider):
+class AlloMovieSpider(scrapy.Spider):
     name = "allo_movie_spider"
     allowed_domains = ["allocine.fr"]
     # start_urls = [f"https://allocine.fr/films/?page={i}" for i in range(7957)]
