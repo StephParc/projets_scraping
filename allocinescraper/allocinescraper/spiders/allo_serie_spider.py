@@ -8,6 +8,12 @@ class AlloSerieSpider(scrapy.Spider):
     # start_urls = [f"https://allocine.fr/series-tv/?page={i}" for i in range(1379)]
     start_urls = ["https://allocine.fr/series-tv/?page=1"]
 
+    custom_settings = {
+        'ITEM_PIPELINES': {
+            'allocinescraper.pipelines.AllocineSeriescraperPipeline': 400
+        }
+    }
+
     def parse(self, response):
         series = response.xpath("//a[@class='meta-title-link']")
        
@@ -18,6 +24,7 @@ class AlloSerieSpider(scrapy.Spider):
     def parse_serie(self, response):
         item = AllocineSeriescraperItem()
         item["title"] = response.xpath("//div[@class='titlebar-title titlebar-title-xl']/span/text()").get()
+        item["original_title"] = response.xpath("//span[contains(text(), 'Titre original')]/following-sibling::strong/text()").get()
         item["global_press_rating"] = response.xpath("//div[@class='rating-item-content']/span[text()=' Presse ']/following-sibling::div//span/text()").get()
         item["global_audience_rating"] = response.xpath("//div[@class='rating-item-content']/span[text()=' Spectateurs ']/following-sibling::div//span/text()").get()
         item["gender"] = response.xpath("//div[@class='meta-body-item meta-body-info']/span/text()").getall()

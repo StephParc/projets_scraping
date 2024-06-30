@@ -8,6 +8,12 @@ class AlloMovieSpider(scrapy.Spider):
     # start_urls = [f"https://allocine.fr/films/?page={i}" for i in range(7957)]
     start_urls = ["https://allocine.fr/films/?page=1"]
 
+    custom_settings = {
+        'ITEM_PIPELINES': {
+            'allocinescraper.pipelines.AllocineMoviescraperPipeline': 200
+        }
+    }
+
     def parse(self, response):
         movies = response.xpath("//a[@class='meta-title-link']")
        

@@ -174,7 +174,128 @@ class AllocineMoviescraperPipeline:
         adapter["language"] = language
         return item
 
+class AllocineSeriescraperPipeline:
+    def process_item(self,item,spider):
+        item = self.clean_global_press_rating(item)
+        item = self.clean_global_audience_rating(item)
+        item = self.clean_gender(item)
+        item = self.clean_start_year(item)
+        item = self.clean_end_year(item)
+        item = self.clean_season(item)
+        item = self.clean_episode(item)
+        item = self.clean_season_audience_rating(item)
+        item = self.clean_episode_resume(item)
+        return item
 
+    def clean_global_press_rating(self, item):
+        adapter = ItemAdapter(item)
+        rating = adapter.get("global_press_rating")
+        if rating is not None:
+            adapter["global_press_rating"] = float(rating.replace(",","."))
+        else:
+            adapter["global_press_rating"] = None
+        return item
     
+    def clean_global_audience_rating(self, item):
+        adapter = ItemAdapter(item)
+        rating = adapter.get("global_audience_rating")
+        if rating is not None:
+            adapter["global_audience_rating"] = float(rating.replace(",","."))
+        else:
+            adapter["global_audience_rating"] = None
+        return item
+    
+    def clean_gender(self, item):
+        adapter = ItemAdapter(item)
+        gender = adapter.get("gender")
+        if gender != []:
+            if "|" in gender and "|" in gender[gender.index("|"):]:
+                gender = gender[gender.index("|")+2:]
+            else:
+                gender = gender[gender.index("|")+1:]
+            adapter["gender"] = gender
+        else:
+            adapter["gender"] = None
+        return item
+    
+    def clean_start_year(self, item):
+        adapter = ItemAdapter(item)
+        start_year = adapter.get("start_year")
+        if start_year is not None:
+            start_year = int(re.findall(r'\d+', start_year)[0])
+            adapter["start_year"] = start_year
+        else:
+            adapter["start_year"] = None
+        return item
 
+    def clean_end_year(self, item):
+        adapter = ItemAdapter(item)
+        end_year = adapter.get("end_year")
+        if end_year is not None:
+            years = re.findall(r'\d+', end_year)
+            if len(years) == 2:
+                end_year = int(re.findall(r'\d+', end_year)[1])
+                adapter["end_year"] = end_year
+            elif "Depuis" in end_year:
+                adapter["end_year"] = None
+            else:
+                adapter["end_year"] = end_year
+        else:
+            adapter["end_year"] = None
+        return item
+
+    def clean_duration(self, item):
+        adapter = ItemAdapter(item)
+        duration = adapter.get("duration")
+        if duration is not None:            
+            duration_str = duration.strip()
+            if "h" in duration_str:
+                hour = int(re.findall(r'\d+', duration_str)[0])
+                if "min" in duration_str:
+                    minutes = int(re.findall(r'\d+', duration_str)[1])
+                else:
+                    minutes = 0
+            else:
+                hour = 0
+                minutes = int(re.findall(r'\d+', duration_str)[0])
+            duration_int = 60 * hour + minutes
+            adapter["duration"] = duration_int
+        else:
+            adapter["duration"] = None
+        return item
+
+    def clean_season(self,item):
+        adapter = ItemAdapter(item)
+        season = adapter.get("season")
+        if season is not None:
+            season = int(re.findall(r'\d+', season)[0])
+        else:
+            season = None
+        return
+
+    def clean_episode(self,item):
+        adapter = ItemAdapter(item)
+        episode = adapter.get("episode")
+        if season is not None:
+            season = int(re.findall(r'\d+', episode)[0])
+        else:
+            season = None
+        return
+
+    def clean_season_audience_rating(self, item):
+        adapter = ItemAdapter(item)
+        rating = adapter.get("season_audience_rating")
+        if rating is not None:
+            adapter["season_audience_rating"] = float(rating.replace(",","."))
+        else:
+            adapter["season_audience_rating"] = None
+        return item
+    
+    def clean_episode_resume(self, item):
+        adapter = ItemAdapter(item)
+        episode_resume = adapter.get("episode_resume")
+        for i in range(len(episode_resume)):
+            episode_resume[i] = episode_resume[i].strip()
+        adapter["episode_resume"] = episode_resume
+        return item
 
