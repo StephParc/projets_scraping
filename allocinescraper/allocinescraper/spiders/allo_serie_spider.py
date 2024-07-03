@@ -10,7 +10,8 @@ class AlloSerieSpider(scrapy.Spider):
 
     custom_settings = {
         'ITEM_PIPELINES': {
-            'allocinescraper.pipelines.AllocineSeriescraperPipeline': 400
+            'allocinescraper.pipelines.AllocineSeriescraperPipeline': 400,
+            # 'allocinescraper.pipelines.SerieDatabasePipeline': 500
         }
     }
 
@@ -23,6 +24,7 @@ class AlloSerieSpider(scrapy.Spider):
 
     def parse_serie(self, response):
         item = AllocineSeriescraperItem()
+        item["id_serie"] = response.xpath("//script[@type='text/javascript'][5]/text()").re(r'"series_id":"(\d+)')[0]
         item["title"] = response.xpath("//div[@class='titlebar-title titlebar-title-xl']/span/text()").get()
         item["original_title"] = response.xpath("//span[contains(text(), 'Titre original')]/following-sibling::strong/text()").get()
         item["global_press_rating"] = response.xpath("//div[@class='rating-item-content']/span[text()=' Presse ']/following-sibling::div//span/text()").get()
@@ -34,21 +36,25 @@ class AlloSerieSpider(scrapy.Spider):
         item["serie_description"] = response.xpath("//p[@class='bo-p']/text()").get()
         item["creator"] = response.xpath("//span[contains(text(), 'Créée par')]/following-sibling::a/text()").getall()
         item["country"] = response.xpath("//span[contains(text(), 'Nationalité')]/following-sibling::span/text()").getall()
-        item["seasons"] = response.xpath("//div[@class='stats-numbers-row-item'][1]/div/text()").get()
-        item["episodes"] = response.xpath("//div[@class='stats-numbers-row-item'][2]/div/text()").get()
+        item["seasons_total"] = response.xpath("//div[@class='stats-numbers-row-item'][1]/div/text()").get()
+        item["episodes_total"] = response.xpath("//div[@class='stats-numbers-row-item'][2]/div/text()").get()
         item["main_actors"] = response.xpath("//span[text()='Avec']/following-sibling::span/text()").getall()
         item["url"] = response.url
         season_episode_page = item["url"].replace("_gen_cserie=", "-")
         season_episode_page = season_episode_page.replace(".html", "/saisons/")
         yield scrapy.Request(season_episode_page, meta={"item":item}, callback=self.parse_season_episode)
+        # yield item
 
     def parse_season_episode(self, response):
         item = response.meta["item"]
         seasons = response.xpath("//h2/a")
-
+        
         for season in seasons:
-            season_url = season.xpath("./@ref").get()
-            yield response.follow(season_url, callback=self.parse_season)
+            season_item = AllocineSeriescraperItem(item)
+            season_url = season.xpath("./@href").get()
+            if season_url is not None:
+                yield response.follow(season_url, meta={"item":season_item}, callback=self.parse_season)
+                # yield item
 
     def parse_season(self, response):
         item = response.meta["item"]
@@ -58,7 +64,9 @@ class AlloSerieSpider(scrapy.Spider):
         item["episode_resume"] = response.xpath("//div[@class='entity-card episode-card entity-card-list cf hred']//div[@class='content-txt synopsis']/text()").getall()    
         item["channel"] = response.xpath("//strong/text()").get()
         casting_url = response.xpath("//h2/a[contains(text(), 'Casting de la saison')]/@href").get()
-        yield scrapy.Request(casting_url, meta={"item":item}, callback=self.parse_actor)
+        # yield item
+        if casting_url is not None:
+            yield response.follow(casting_url, meta={"item":item}, callback=self.parse_actor)
 
     def parse_actor(self, response):
         item = response.meta["item"]

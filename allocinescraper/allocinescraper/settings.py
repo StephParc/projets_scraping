@@ -65,7 +65,7 @@ DEFAULT_REQUEST_HEADERS = {
 # Configure item pipelines
 # See https://docs.scrapy.org/en/latest/topics/item-pipeline.html
 ITEM_PIPELINES = {
-   "allocinescraper.pipelines.AllocineMoviescraperPipeline": 300,
+   "allocinescraper.pipelines.AllocineMoviescraperPipeline": 200
 }
 
 # Enable and configure the AutoThrottle extension (disabled by default)
